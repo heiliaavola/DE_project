@@ -1,2 +1,2 @@
-# DE_porject
+# DE_project
 Data Engineering project 
