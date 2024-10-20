@@ -1,3 +1,4 @@
+# seda võib julgelt muuta ja kustutada
 import random
 
 def generate_random_numbers(count, start, end):
