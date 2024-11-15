@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="GB2312"?>
+<root>
+  <config type="Version Info File" version="1" SortVersion="BTSDA 8.0.0.526(2024.02.23)(R3)" date="20241008113322" Is9s="0">
+    <ZwjVersion SvrVer="BTSServer(R3)-8.0.0.369 (2024.02.23)" CurrClientVer="BTS Client 8.0.0.526(2024.02.23)" ZwjVersion="4S_4.3.3.3_20230731_181828" ZwjSn="SN-NEWARE-ZWJ-4S-LX" MainXwjVer="M04310301_230616_110828_FD3F6" AuxXwjCount="0" />
+    <ZwjSn Guid="F0EAD49C6A3011EEAC37D4BED9DE6B8B" GuidTime="2023-10-14 09:28:12" Sn="PSN456789111" ProductionTime="2049-50-51 52:53:54" Cnp="1" CnpTime="2000-00-00 00:00:00" CnpLanguage="0" Compatibility="0" />
+    <XwjSn>
+      <XwjSn1 XwjID="1" Guid="39D9138B641E11EEB06ED4BED9DE6B8B" GuidTime="2023-10-06 15:59:07" ProductionTime="0000-00-00 00:00:00" EffectiveUseOf="2000-00-00 00:00:00" XwjFunction="3221225472" KbChangeCount="7" FirstCaliTime="2024-01-04 20:12:55" LastCaliTime="2024-06-13 16:40:51" LastCaliSoftwareVer="16973824" LastCaliWorker="×T??ít" Cnp="0" CnpTime="2000-00-00 00:00:00" />
+    </XwjSn>
+    <DevParam Count="0" />
+  </config>
+</root>
