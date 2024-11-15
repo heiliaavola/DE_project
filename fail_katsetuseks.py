@@ -1,4 +1,5 @@
 # seda võib julgelt muuta ja kustutada
+# lisasin rea juurde et brancehi tekitada
 import random
 
 def generate_random_numbers(count, start, end):
