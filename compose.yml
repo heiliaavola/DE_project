@@ -1,0 +1,115 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    command: server --console-address ":9001" /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: always
+
+  airflow-webserver:
+    build:
+      context: ./airflow
+    container_name: airflow-webserver
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY='iUXMxHcly_9XJHn3kljmoyvF4IxVL6Vgd5eK5yHld9w='
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ENDPOINT=minio:9000
+      - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./mnt/tmp/duckdb_data:/app/data
+      - ./data:/opt/airflow/data
+      - .:/opt/airflow/project_data
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - minio
+    restart: always
+    command: webserver
+
+  airflow-scheduler:
+    build:
+      context: ./airflow
+    container_name: airflow-scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY='iUXMxHcly_9XJHn3kljmoyvF4IxVL6Vgd5eK5yHld9w='
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ENDPOINT=minio:9000
+      - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./mnt/tmp/duckdb_data:/app/data
+      - ./data:/opt/airflow/data
+      - .:/opt/airflow/project_data
+    depends_on:
+      - postgres
+      - minio
+    restart: always
+    command: scheduler
+    user: root
+
+  duckdb:
+    build:
+      context: ./duckdb
+    container_name: duckdb
+    volumes:
+      - ./mnt/tmp/duckdb_data:/app/data
+    stdin_open: true
+    tty: true
+
+  airflow-init:
+    image: apache/airflow:2.7.1
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CORE__FERNET_KEY='iUXMxHcly_9XJHn3kljmoyvF4IxVL6Vgd5eK5yHld9w='
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+      - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
+    volumes:
+      - ./mnt/tmp/duckdb_data:/app/data
+      - .:/opt/airflow/project_data
+    entrypoint: "airflow db init"
+
+volumes:
+  postgres-db-volume:
+  minio-data:
