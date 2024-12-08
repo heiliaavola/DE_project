@@ -15,4 +15,4 @@ RUN apt-get update && apt-get install -y \
 
 
 USER airflow
-RUN pip install duckdb pyarrow
+RUN pip install duckdb pyarrow boto3 pyiceberg thrift
