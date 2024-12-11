@@ -15,6 +15,7 @@ docker exec airflow-webserver airflow users create --username airflow --password
 
 ## DAG Descriptions
 
-- upload_raw_files.py: Uploads data from airflow/project_data/anonymized_data_package folder to MinIO file storage at data/raw-data
-- dat_to_parquet.py: Converts machine2 data from .dat files to .parquet files and saves them to MinIO file storage at bronze/
-- parquet_to_iceberg.py: Work in progress
+1. upload_raw_files.py: Uploads .ndax and .dat data from airflow/project_data/anonymized_data_package folder to MinIO file storage at data/raw-data
+1. dat_to_parquet.py: Converts machine2 data from .dat files to .parquet files and saves them to MinIO file storage at data/bronze/
+1. parquet_to_iceberg.py: Converts machine2 data from .parquet to iceberg formated .parquet files and saves them to MinIO file storage at data/warehouse/silver/machine_2
+1. iceberg_to_duckdb: Work in progress
