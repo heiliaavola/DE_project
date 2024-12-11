@@ -1,5 +1,5 @@
 # Airflow Dockerfile
-FROM apache/airflow:2.7.1
+FROM apache/airflow:2.7.1-python3.9
 
 USER root
 RUN apt-get update && apt-get install -y \
@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
     rm duckdb.zip && \
     apt-get clean
 
-
-
 USER airflow
+
+RUN pip install --upgrade pip
+
 RUN pip install duckdb pyarrow boto3 pyiceberg thrift

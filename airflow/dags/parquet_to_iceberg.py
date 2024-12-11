@@ -1,131 +1,139 @@
+import duckdb
+import boto3
+import os
+import tempfile
 from datetime import datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from pyiceberg.catalog import load_catalog
-from pyiceberg.schema import Schema
-from pyiceberg.types import (
-    TimestampType,
-    DoubleType,
-    StringType,
-    StructType
-)
-import boto3
-import tempfile
-import pandas as pd
+from pyiceberg.schema import Schema, NestedField
+from pyiceberg.types import IntegerType, StringType
+import pyarrow as pa
+import pyarrow.parquet as pq
 
-def ensure_bucket_exists(s3_client, bucket_name):
-    """Create bucket if it doesn't exist"""
-    try:
-        s3_client.head_bucket(Bucket=bucket_name)
-    except:
-        try:
-            s3_client.create_bucket(Bucket=bucket_name)
-            print(f"Created bucket: {bucket_name}")
-        except Exception as e:
-            print(f"Error creating bucket {bucket_name}: {e}")
 
-def load_parquet_to_iceberg(**context):
-    """Convert parquet files from bronze to Iceberg tables"""
+def parquet_to_iceberg(**context):
+    """Transform Parquet files from Bronze bucket to Iceberg and upload to Silver bucket."""
     # Initialize MinIO client
-    s3 = boto3.client('s3',
+    s3 = boto3.client(
+        's3',
         endpoint_url='http://minio:9000',
         aws_access_key_id='minioadmin',
-        aws_secret_access_key='minioadmin'
+        aws_secret_access_key='minioadmin',
+        verify=False
     )
-    
-    # Ensure required buckets exist
-    ensure_bucket_exists(s3, 'warehouse')
-    
-    # Initialize Iceberg catalog
-    catalog = load_catalog(
-        'hive',
-        **{
-            'type': 'hive',
-            'uri': 'http://minio:9000',
-            'warehouse': 'warehouse',
-            's3.endpoint': 'http://minio:9000',
-            's3.access-key-id': 'minioadmin',
-            's3.secret-access-key': 'minioadmin',
-            's3.path-style-access': 'true'
-        }
-    )
-    
-    # Define schema for measurements
-    measurement_schema = Schema(
-        StructType({
-            'timestamp': TimestampType(),
-            'value': DoubleType(),
-            'measurement_type': StringType(),
-            'machine_id': StringType(),
-            'source_file': StringType()
-        })
-    )
-    
+
+    # Create silver bucket if it doesn't exist
     try:
-        # Create namespace if it doesn't exist
-        if 'default' not in catalog.list_namespaces():
-            catalog.create_namespace('default')
-        
-        # Create or get Iceberg table
-        table_name = 'default.measurements'
-        try:
-            table = catalog.load_table(table_name)
-            print(f"Using existing table: {table_name}")
-        except:
-            table = catalog.create_table(
-                identifier=table_name,
-                schema=measurement_schema,
-                location='warehouse/measurements'
-            )
-            print(f"Created new table: {table_name}")
-        
-        # List parquet files in bronze bucket
-        response = s3.list_objects_v2(Bucket='bronze')
-        
-        if 'Contents' in response:
-            for obj in response['Contents']:
-                if obj['Key'].endswith('.parquet'):
-                    print(f"Processing: {obj['Key']}")
-                    
-                    # Download parquet file
-                    with tempfile.NamedTemporaryFile(suffix='.parquet') as tmp:
-                        s3.download_file(
-                            Bucket='bronze',
-                            Key=obj['Key'],
-                            Filename=tmp.name
-                        )
-                        
-                        # Read parquet into pandas
-                        df = pd.read_parquet(tmp.name)
-                        
-                        # Add metadata if missing
-                        if 'machine_id' not in df.columns:
-                            df['machine_id'] = 'machine_2'
-                        if 'source_file' not in df.columns:
-                            df['source_file'] = obj['Key']
-                        
-                        # Write to Iceberg table
-                        table.append(df)
-                        print(f"Successfully loaded {obj['Key']} to Iceberg")
-        
-        # Print summary
-        print("\nIceberg table summary:")
-        print(f"Location: {table.location()}")
-        print(f"Schema: {table.schema()}")
-        
+        s3.head_bucket(Bucket='silver')
+    except:
+        s3.create_bucket(Bucket='silver')
+
+    # List Parquet files in the bronze bucket
+    response = s3.list_objects_v2(Bucket='bronze')
+    parquet_files = [obj['Key'] for obj in response.get('Contents', []) if obj['Key'].endswith('.parquet')]
+
+    # Load Iceberg catalog
+    try:
+        catalog = load_catalog(name="rest")
     except Exception as e:
-        print(f"Error in Iceberg conversion: {str(e)}")
-        raise e
+        print(f"Problems with catalog: {e}")
+
+    namespace = "default"
+  
+    print("Namespace created")
+    try:
+        catalog.create_namespace(namespace)
+    except Exception as e:
+        print(f"Namespace '{namespace}' already exists: {e}")
+
+    # Process each Parquet file
+    for parquet_file in parquet_files:
+        print(f"Processing {parquet_file}")
+
+        try:
+            # Download Parquet file from bronze bucket
+            with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp_parquet:
+                s3.download_fileobj('bronze', parquet_file, tmp_parquet)
+                tmp_parquet_path = tmp_parquet.name
+            
+            # Create Iceberg table using DuckDB
+            iceberg_table_dir = f"silver/{parquet_file.replace('.parquet', '')}_iceberg"
+            iceberg_table_path = f"s3://warehouse/{iceberg_table_dir}"
+            
+            # Read the Parquet data using DuckDB
+            with duckdb.connect() as conn:
+                # Install and load required extensions
+                conn.execute("INSTALL httpfs")
+                conn.execute("LOAD httpfs")
+                
+                # Configure S3 settings
+                conn.sql("""
+                SET s3_region='us-east-1'; 
+                SET s3_url_style='path';
+                SET s3_endpoint='minio:9000';
+                SET s3_access_key_id='minioadmin';
+                SET s3_secret_access_key='minioadmin';
+                SET s3_use_ssl=false;
+                """)
+
+                # Read Parquet data directly into Arrow format
+                print(f"Reading Parquet file: {tmp_parquet_path}")
+                conn.sql(f"CREATE TABLE tmp AS SELECT * FROM read_parquet('{tmp_parquet_path}')")
+                print("select worked")
+                arrow_table = conn.sql(f"SELECT * FROM tmp").arrow()
+                print("arrow worked")
+                schema = arrow_table.schema
+                print("schema worked")
+            
+                
+            # Create table name from file path (removing directory structure and extension)
+            table_name = f"{os.path.basename(parquet_file).replace('.parquet', '')}_table"
+            print("table_name worked: " + table_name)
+
+            # Create or replace Iceberg table
+            full_table_name = f"{namespace}.{table_name}"
+            print("full_table_name worked: " + full_table_name)
+                
+            # Proceed with table creation anyway
+            table = catalog.create_table(
+                identifier=full_table_name,
+                schema=schema,
+                location=iceberg_table_path,
+            )
+            print("table created worked")
+            
+            table.append(arrow_table)
+
+            # Clean up temporary Parquet file
+            os.remove(tmp_parquet_path)
+            print(f"Successfully converted {parquet_file} to Iceberg format.")
+
+        except Exception as e:
+            print(f"Error processing {parquet_file}: {str(e)}")
+            raise  # Re-raise the exception to mark the task as failed
+
+    # Verify silver bucket contents
+    try:
+        response = s3.list_objects_v2(Bucket='silver')
+        print("\nContents of silver bucket:")
+        for obj in response.get('Contents', []):
+            print(f"- {obj['Key']} (Size: {obj['Size']} bytes)")
+    except Exception as e:
+        print(f"Error listing silver bucket contents: {str(e)}")
+        raise
+
 
 with DAG(
     'parquet_to_iceberg',
-    schedule_interval=None,
+    schedule_interval=None,  # Manual trigger
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['transform']
 ) as dag:
 
     convert_task = PythonOperator(
-        task_id='convert_to_iceberg',
-        python_callable=load_parquet_to_iceberg
+        task_id='parquet_to_iceberg',
+        python_callable=parquet_to_iceberg
     )
+    
