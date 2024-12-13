@@ -1,11 +1,11 @@
-version: '3'
+name: de_project
 
 services:
   duckdb:
     container_name: duckdb
     image: python:3.12.7-slim-bookworm
     build:
-      context: .
+      context: ./duckdb
     volumes:
       - ../mnt/tmp/duckdb_data:/app/data
     stdin_open: true
@@ -14,6 +14,49 @@ services:
       PYICEBERG_HOME: /app/data   
     networks:
       iceberg_network:
+
+  mongodb:
+    build:
+      context: ./mongodb
+      dockerfile: Dockerfile
+    container_name: mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: airflow
+      MONGO_INITDB_ROOT_PASSWORD: airflow
+      MONGO_INITDB_DATABASE: airflow_metadata
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      iceberg_network:
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_URL=mongodb://airflow:airflow@mongodb:27017/
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=airflow
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=airflow
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=pass
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - iceberg_network
+
   minio:
     image: minio/minio:RELEASE.2024-10-13T13-34-11Z
     container_name: minio
@@ -31,6 +74,7 @@ services:
       iceberg_network:
         aliases:
           - warehouse.minio
+
   iceberg_rest:
     image: tabulario/iceberg-rest:1.6.0
     container_name: iceberg_rest
@@ -99,17 +143,20 @@ services:
       - PYICEBERG_CATALOG__REST__S3__SECRET_ACCESS_KEY=minioadmin
       - PYICEBERG_CATALOG__REST__S3__PATH_STYLE_ACCESS=true
       - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
+      - MONGODB_URI=mongodb://airflow:airflow@mongodb:27017/airflow_metadata
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./mnt/tmp/duckdb_data:/app/data
       - ./data:/opt/airflow/data
       - .:/opt/airflow/project_data
+      - ./anonymized_data_package:/opt/airflow/project_data/anonymized_data_package
     ports:
       - "8080:8080"
     depends_on:
       - postgres
       - minio
       - iceberg_rest
+      - mongodb
     restart: always
     command: webserver
     networks:
@@ -134,15 +181,18 @@ services:
       - PYICEBERG_CATALOG__REST__S3__SECRET_ACCESS_KEY=minioadmin
       - PYICEBERG_CATALOG__REST__S3__PATH_STYLE_ACCESS=true
       - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
+      - MONGODB_URI=mongodb://airflow:airflow@mongodb:27017/airflow_metadata
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./mnt/tmp/duckdb_data:/app/data
       - ./data:/opt/airflow/data
       - .:/opt/airflow/project_data
+      - ./anonymized_data_package:/opt/airflow/project_data/anonymized_data_package
     depends_on:
       - postgres
       - minio
       - iceberg_rest
+      - mongodb
     restart: always
     command: scheduler
     user: root
@@ -170,3 +220,5 @@ networks:
 
 volumes:
   postgres-db-volume:
+  mongodb_data:
+  mongodb_config:

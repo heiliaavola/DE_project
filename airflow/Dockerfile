@@ -21,4 +21,8 @@ RUN pip install --upgrade pip && \
     boto3 \
     pyiceberg \
     thrift \
-    openpyxl
+    openpyxl \
+    pymongo \
+    pandas \
+    dnspython \ 
+    LimeNDAX

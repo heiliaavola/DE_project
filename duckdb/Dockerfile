@@ -26,12 +26,15 @@ RUN arch=$(dpkg --print-architecture) && \
     chmod +x /usr/local/bin/duckdb && \
     rm duckdb.zip
 
-# Install DuckDB via pip for Python use
+# Install DuckDB and MongoDB dependencies via pip
 RUN pip install --no-cache-dir \
     duckdb \
     pyarrow \
     pyiceberg[s3fs,duckdb,hive,sql-sqlite,pyarrow] \
-    openpyxl==3.1.2
+    openpyxl==3.1.2 \
+    pymongo \
+    pandas \
+    dnspython
 
 # Set the default command to launch DuckDB CLI
 CMD ["duckdb"]
