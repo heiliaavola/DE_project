@@ -6,7 +6,7 @@ import boto3
 import os
 
 def upload_raw_data(**context):
-    """Upload both DAT and NDAX files to MinIO"""
+    """Upload both DAT and XLSX files to MinIO"""
     s3 = boto3.client('s3',
         endpoint_url='http://minio:9000',
         aws_access_key_id='minioadmin',
@@ -22,7 +22,7 @@ def upload_raw_data(**context):
     
     # Define paths
     BASE_DIR = '/opt/airflow/project_data/airflow/project_data/anonymized_data_package'
-    MACHINE1_DIR = f"{BASE_DIR}/machine_1/ndax_files"
+    MACHINE1_DIR = f"{BASE_DIR}/machine_1"
     MACHINE2_DIR = f"{BASE_DIR}/machine_2"
     
     uploaded_files = []
@@ -43,23 +43,21 @@ def upload_raw_data(**context):
             except Exception as e:
                 print(f"Error uploading {filename}: {str(e)}")
     
-    # Upload NDAX files from machine_1
-    for measurement_type in ['long_measurements', 'short_measurements']:
-        ndax_dir = os.path.join(MACHINE1_DIR, measurement_type)
-        for filename in sorted(os.listdir(ndax_dir)):
-            if filename.endswith('.ndax'):
-                file_path = os.path.join(ndax_dir, filename)
-                try:
-                    with open(file_path, 'rb') as file_obj:
-                        s3.put_object(
-                            Bucket='raw-data',
-                            Key=f'machine_1/{measurement_type}/{filename}',
-                            Body=file_obj
-                        )
-                    uploaded_files.append(f'machine_1/{measurement_type}/{filename}')
-                    print(f"Successfully uploaded {filename}")
-                except Exception as e:
-                    print(f"Error uploading {filename}: {str(e)}")
+    # Upload XLSX files from machine_1
+    for filename in sorted(os.listdir(MACHINE1_DIR)):
+        if filename.endswith('.xlsx'):
+            file_path = os.path.join(MACHINE1_DIR, filename)
+            try:
+                with open(file_path, 'rb') as file_obj:
+                    s3.put_object(
+                        Bucket='raw-data',
+                        Key=f'machine_1/{filename}',
+                        Body=file_obj
+                    )
+                uploaded_files.append(f'machine_1/{filename}')
+                print(f"Successfully uploaded {filename}")
+            except Exception as e:
+                print(f"Error uploading {filename}: {str(e)}")
     
     # Verify uploads
     try:
@@ -74,7 +72,7 @@ def upload_raw_data(**context):
 
 with DAG(
     'upload_raw_files',
-    schedule_interval='@daily',
+    schedule_interval=None,
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['raw']

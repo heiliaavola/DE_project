@@ -27,7 +27,11 @@ RUN arch=$(dpkg --print-architecture) && \
     rm duckdb.zip
 
 # Install DuckDB via pip for Python use
-RUN pip install --no-cache-dir duckdb pyarrow pyiceberg[s3fs,duckdb,hive,sql-sqlite,pyarrow]
+RUN pip install --no-cache-dir \
+    duckdb \
+    pyarrow \
+    pyiceberg[s3fs,duckdb,hive,sql-sqlite,pyarrow] \
+    openpyxl==3.1.2
 
 # Set the default command to launch DuckDB CLI
 CMD ["duckdb"]
