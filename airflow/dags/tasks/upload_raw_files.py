@@ -16,9 +16,9 @@ def upload_raw_data(**context):
     
     # Ensure bucket exists
     try:
-        s3.head_bucket(Bucket='raw_data')
+        s3.head_bucket(Bucket='raw-data')
     except:
-        s3.create_bucket(Bucket='raw_data')
+        s3.create_bucket(Bucket='raw-data')
     
     # Define paths
     BASE_DIR = '/opt/airflow/project_data/airflow/project_data/anonymized_data_package'
@@ -34,7 +34,7 @@ def upload_raw_data(**context):
             try:
                 with open(file_path, 'rb') as file_obj:
                     s3.put_object(
-                        Bucket='raw_data',
+                        Bucket='raw-data',
                         Key=f'machine_2/{filename}',
                         Body=file_obj
                     )
@@ -50,7 +50,7 @@ def upload_raw_data(**context):
             try:
                 with open(file_path, 'rb') as file_obj:
                     s3.put_object(
-                        Bucket='raw_data',
+                        Bucket='raw-data',
                         Key=f'machine_1/{filename}',
                         Body=file_obj
                     )
@@ -61,8 +61,8 @@ def upload_raw_data(**context):
     
     # Verify uploads
     try:
-        response = s3.list_objects_v2(Bucket='raw_data')
-        print("\nContents of raw_data bucket:")
+        response = s3.list_objects_v2(Bucket='raw-data')
+        print("\nContents of raw-data bucket:")
         for obj in response.get('Contents', []):
             print(f"- {obj['Key']} (Size: {obj['Size']} bytes)")
     except Exception as e:
@@ -81,7 +81,7 @@ with DAG(
 
     upload_task = PythonOperator(
         task_id='upload_raw_files',
-        python_callable=upload_raw_data
+        python_callable=upload_raw-data
     )
 """
 
