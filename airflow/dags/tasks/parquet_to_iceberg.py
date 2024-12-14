@@ -228,7 +228,7 @@ def parquet_to_iceberg(**context):
         else:
             print(f"Skipping unrecognized file: {parquet_file}")
 
-
+"""
 with DAG(
     'parquet_to_iceberg',
     schedule_interval=None,  # Manual trigger
@@ -241,12 +241,11 @@ with DAG(
         task_id='parquet_to_iceberg',
         python_callable=parquet_to_iceberg
     )
-
 """
+
 def get_parquet_to_iceberg_task(dag):
     return PythonOperator(
         task_id='parquet_to_iceberg',
         python_callable=parquet_to_iceberg,
         dag=dag
     )
-"""

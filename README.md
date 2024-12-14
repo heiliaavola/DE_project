@@ -29,8 +29,8 @@ docker compose up -d
   - Password: group8
 
 - **MinIO**: http://localhost:9001
-  - Username: group8
-  - Password: group8
+  - Username: minioadmin
+  - Password: minioadmin
 
 - **MongoDB**: localhost:27017
   - Username: group8
@@ -59,6 +59,8 @@ docker compose up -d
    - Converts metadata from MongoDB to Parquet
    - Stored in MinIO bronze bucket
 
+Excel to parquet, Dat to parquet and MongoDB to parqurt are not run parallel because this resulted sometimes in error (Error: `[Errno 35] Resource deadlock avoided`).
+
 6. **Parquet → Iceberg**
    - Convert Parquet files to Iceberg format
 
@@ -85,6 +87,9 @@ NDAX → Excel → MongoDB/MinIO → Parquet → Iceberg → DuckDB → Star Sch
    - Error: `[Errno 2] No such file or directory: '.\temdata'`
    - Error: `[Errno 35] Resource deadlock avoided`
    - Impact: NDAX to Excel conversion fails in Docker containers on MacOS
+
+2. **Running the pipeline again**
+If you want to run pipeline again, then you have to do 'docker compose down', delete all images and volumes from docker and do 'docker compose up -d' again.
 
 ## Troubleshooting
 

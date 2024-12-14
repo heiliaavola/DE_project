@@ -66,7 +66,7 @@ def star_schema_to_iceberg(**context):
             "dim_operator",
             "dim_electrode_material",
             "dim_dat_metadata",
-            "fact_ndax_measurements",
+            "fact_excel_measurements",
             "fact_dat_measurements"
         ]
 
