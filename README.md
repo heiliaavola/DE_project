@@ -1,21 +1,94 @@
-# DE_Project
+# VOLTAGE TO VALUE: ENGINEERING AN ANALYTICS PIPELINE FOR ELECTRODE DATA (DE_project)
 
-## How to Run
+Data processing pipeline using Apache Airflow to transform machine data and metadata through various stages from raw data to star schema.
 
-Start the containers:
-docker compose up -d 
+## Prerequisites
 
-## Accessing Airflow
+1. **Important**: Run `ndax_to_excel.ipynb` Jupyter notebook first
+   - This converts NDAX files to Excel format
+   - This step is separate from Airflow due to issue in Docker on MacOS. Tempdata directory access errors when processing NDAX files
 
-Access the Airflow web interface at:
-http://localhost:8080/ 
+Using Jupyter notebook locally bypasses these Docker/MacOS file system limitations
 
-Create an Airflow admin user with this command:
-docker exec airflow-webserver airflow users create --username airflow --password airflow --firstname first --lastname last --role Admin --email admin@airflow.org 
+## Quick Start
 
-## DAG Descriptions
+1. Start the containers:
+```bash
+docker compose up -d
+```
 
-1. upload_raw_files.py: Uploads .ndax and .dat data from airflow/project_data/anonymized_data_package folder to MinIO file storage at data/raw-data
-1. dat_to_parquet.py: Converts machine2 data from .dat files to .parquet files and saves them to MinIO file storage at data/bronze/
-1. parquet_to_iceberg.py: Converts machine2 data from .parquet to iceberg formated .parquet files and saves them to MinIO file storage at data/warehouse/silver/machine_2
-1. iceberg_to_duckdb: Work in progress
+2. Access Airflow UI:
+- URL: http://localhost:8080
+- Username: group8
+- Password: group8
+
+## Services Access
+
+- **Airflow**: http://localhost:8080
+  - Username: group8
+  - Password: group8
+
+- **MinIO**: http://localhost:9001
+  - Username: group8
+  - Password: group8
+
+- **MongoDB**: localhost:27017
+  - Username: group8
+  - Password: group8
+
+## Pipeline Flow
+
+1. **Upload Raw Files**
+   - Source: project_data/anonymized_data_package
+   - Destination: MinIO (data/raw_data)
+   - Handles: .xlsx and .dat files
+
+2. **Excel Metadata → MongoDB**
+   - Converts Excel metadata to JSON
+   - Stores as BSON in MongoDB
+
+3. **Excel → Parquet**
+   - Converts machine_1 Excel files to Parquet format
+   - Stored in MinIO bronze bucket
+
+4. **DAT → Parquet**
+   - Converts machine_2 .dat files to Parquet
+   - Stored in MinIO bronze bucket
+
+5. **MongoDB → Parquet**
+   - Converts metadata from MongoDB to Parquet
+   - Stored in MinIO bronze bucket
+
+6. **Parquet → Iceberg**
+   - Convert Parquet files to Iceberg format
+
+7. **Iceberg → DuckDB**
+   - Load Iceberg tables into DuckDB
+
+8. **DuckDB → Star Schema**
+   - Transform data into star schema for each machine
+   - Separate transformations for machine_1 and machine_2
+
+9. **Star Schema → Iceberg**
+   - Store final star schema in Iceberg format
+
+## Data Flow Structure
+
+```
+NDAX → Excel → MongoDB/MinIO → Parquet → Iceberg → DuckDB → Star Schema → Iceberg
+(Manual)        (Bronze)     (Bronze)  (Silver)          (Gold)       (Gold)
+```
+
+## Known Issues
+
+1. **MacOS DuckDB Issues**
+   - Error: `[Errno 2] No such file or directory: '.\temdata'`
+   - Error: `[Errno 35] Resource deadlock avoided`
+   - Impact: NDAX to Excel conversion fails in Docker containers on MacOS
+   - Workaround: Use Jupyter notebook for NDAX conversion step
+
+## Troubleshooting
+
+- Check Airflow task logs in UI for failures
+- Verify MinIO bucket and MongoDB database existence
+- Ensure sufficient system resources
