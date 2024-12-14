@@ -70,16 +70,7 @@ def iceberg_to_duckdb(**context):
                             #conn.execute(f'SELECT "Voltage [V]" FROM "{table_name}" LIMIT 20').fetchall()
                             for row in rows:
                                 print(row)
-                         # Fetch a specific column (e.g., "Voltage [V]")
-                            # Fetch column names
-                            #column_info = conn.execute(f"PRAGMA table_info('{table_name}')").fetchall()
-                            #column_names = [col[1] for col in column_info]  # Assuming second element contains column names
-                            #print(f"Columns in table {table_name}: {', '.join(column_names)}")
-                            
-                            #specific_column_data = conn.execute(f'SELECT "adjusted_timestamp" FROM "{table_name}" LIMIT 20').fetchall()
-                            #print(f"\nFirst 20 rows of column 'adjusted_timestamp' in table {table_name}:")
-                            #for row in specific_column_data:
-                            #    print(row)
+
                         except Exception as e:
                             print(f"Error fetching rows from table {table_name}: {e}")
     
