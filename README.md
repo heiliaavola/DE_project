@@ -1,4 +1,4 @@
-# DE_Project
+# VOLTAGE TO VALUE: ENGINEERING AN ANALYTICS PIPELINE FOR ELECTRODE DATA (DE_project)
 
 Data processing pipeline using Apache Airflow to transform machine data and metadata through various stages from raw data to star schema.
 
@@ -40,7 +40,7 @@ docker compose up -d
 
 1. **Upload Raw Files**
    - Source: project_data/anonymized_data_package
-   - Destination: MinIO (data/raw-data)
+   - Destination: MinIO (data/raw_data)
    - Handles: .xlsx and .dat files
 
 2. **Excel Metadata → MongoDB**
@@ -48,11 +48,11 @@ docker compose up -d
    - Stores as BSON in MongoDB
 
 3. **Excel → Parquet**
-   - Converts machine1 Excel files to Parquet format
+   - Converts machine_1 Excel files to Parquet format
    - Stored in MinIO bronze bucket
 
 4. **DAT → Parquet**
-   - Converts machine2 .dat files to Parquet
+   - Converts machine_2 .dat files to Parquet
    - Stored in MinIO bronze bucket
 
 5. **MongoDB → Parquet**

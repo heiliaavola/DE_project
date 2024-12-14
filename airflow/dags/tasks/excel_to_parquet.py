@@ -20,9 +20,9 @@ def convert_excel_to_parquet(**context):
     except:
         s3.create_bucket(Bucket='bronze')
     
-    # Get list of Excel files from raw-data
+    # Get list of Excel files from raw_data
     response = s3.list_objects_v2(
-        Bucket='raw-data',
+        Bucket='raw_data',
         Prefix='machine_1/'
     )
     
@@ -33,7 +33,7 @@ def convert_excel_to_parquet(**context):
             
             try:
                 # Get Excel file from MinIO
-                response = s3.get_object(Bucket='raw-data', Key=obj['Key'])
+                response = s3.get_object(Bucket='raw_data', Key=obj['Key'])
                 
                 # Save the Excel file temporarily
                 with tempfile.NamedTemporaryFile(suffix='.xlsx') as tmp_excel:

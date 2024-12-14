@@ -144,7 +144,7 @@ def process_metadata_file(parquet_file, s3, catalog, namespace):
             tmp_parquet_path = tmp_parquet.name
 
         # Create Iceberg table path
-        iceberg_table_dir = f"silver/{parquet_file.replace('.parquet', '')}_iceberg"
+        iceberg_table_dir = f"silver/{parquet_file.replace('.parquet', '')}_metadata"
         iceberg_table_path = f"s3://warehouse/{iceberg_table_dir}"
 
         # Read the Parquet data using DuckDB
@@ -228,7 +228,7 @@ def parquet_to_iceberg(**context):
         else:
             print(f"Skipping unrecognized file: {parquet_file}")
 
-"""
+
 with DAG(
     'parquet_to_iceberg',
     schedule_interval=None,  # Manual trigger
@@ -241,11 +241,12 @@ with DAG(
         task_id='parquet_to_iceberg',
         python_callable=parquet_to_iceberg
     )
-    """
 
+"""
 def get_parquet_to_iceberg_task(dag):
     return PythonOperator(
         task_id='parquet_to_iceberg',
         python_callable=parquet_to_iceberg,
         dag=dag
     )
+"""
