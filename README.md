@@ -1,5 +1,23 @@
 # VOLTAGE TO VALUE: ENGINEERING AN ANALYTICS PIPELINE FOR ELECTRODE DATA (DE_project)
 
+Authors: Annabel Hiiu, Anett Sandberg, Heili Aavola
+
+## Background
+
+This data engineering project is based on measurement data originally provided by the R&D team at **OÜ Stargate Hydrogen Solutions**. The company manufactures electrolyzers, and the data focuses on measurements that compare different electrode materials.
+
+The raw data, which has been pseudonymized for this project, primarily comes from two machines:
+- **Machine 1**: Long-term and short-term measurements `.ndax` format (10 files)
+- **Machine 2**: Measurements in `.dat` format (10 files)
+and metadata for each measurement in `.xlsx` format
+
+### Key Questions to Answer
+
+1. Which of the two electrode materials performs better at a certain current density?
+2. How does data from different machines compare for the same electrode material?
+3. Which electrode material showed faster degradation?
+4. How does the purity/volume of produced H₂ compare between the two different electrode materials?
+
 Data processing pipeline using Apache Airflow to transform machine data and metadata through various stages from raw data to star schema.
 
 ## Tools and Techonologies
@@ -133,3 +151,19 @@ docker ps
 ```
 
 ## Data Privacy
+
+- **Pseudonymization Applied**:  
+  The code `raw_data_anonymization.ipynb` replaces identifying data (like filenames and operator names) with artificial identifiers (e.g., `1001.ndax`, `2001.dat`, or `Operator_uuid`). A separate key file allows for the original data to be restored if necessary. The relationships between records are preserved and the actual measurement values remain unchanged.
+
+- **Why It's Not Pure Anonymization**:  
+  True anonymization would irreversibly sever the link between the data and its original identities. Here, the presence of a key file allows authorized re-identification, which means the process is reversible.
+
+- **Why It's Not Data Masking**:  
+  Data masking usually aims to hide sensitive data by transforming it into non-identifiable but still realistic values, often maintaining a similar data format. In contrast, this project uses sequential IDs and UUIDs, focusing on privacy protection over preserving realistic values in the identifiers.
+
+**Benefits of Pseudonymization**:
+
+- Protects privacy while maintaining data utility.
+- Preserves the structure and relationships within the dataset.
+- Complies with certain privacy regulations by allowing for authorized re-identification when necessary.
+- Facilitates research and analysis without exposing the original sensitive information → a key factor in gaining approval from **OÜ Stargate Hydrogen Solutions** to use the data.
