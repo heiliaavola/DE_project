@@ -460,7 +460,7 @@ def populate_star_schema(**kwargs):
         #8. INSERT DATA INTO fact_dat_measurements (ONLY FOR MACHINE_2)
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit() and table_name.startswith("2008"): #NB! SIIN KIIRUSE PÄRAST LOEME SISSE AINULT 1 FAILI INFO
+            if table_name[0].isdigit() and table_name.startswith("2008"): # only one file
             #if table_name[0].isdigit() and table_name.startswith("2"):
                 # Query to fetch all rows from the table
                 query = f"""

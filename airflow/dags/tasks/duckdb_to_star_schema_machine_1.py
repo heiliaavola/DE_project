@@ -371,7 +371,7 @@ def populate_star_schema(**kwargs):
         for table in tables:
             table_name = table[0]
             # Filter for machine_1 tables by their naming convention (starting with "1")
-            if table_name[0].isdigit() and table_name.startswith("1001"): #PRAEGU AINULT 1 FAIL
+            if table_name[0].isdigit() and table_name.startswith("1001"): # only one file
                 print(f"Processing fact data insertion for table {table_name}")
 
                 # Query to fetch all rows from the table

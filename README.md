@@ -113,7 +113,11 @@ Note: Tasks 3-5 run sequentially to avoid resource deadlock errors (`[Errno 35]`
    - Separate transformations for machine_1 and machine_2 
    - We estimate it to take over an hour so we decided not to read in all the files yet 
    - Instead we read in only one file from machine_1 and machine_2 
-   - We tried to overwrite temporary metadata with the right one from metadata files but it didn't work and we couldn't figure why
+   - We tried to overwrite temporary metadata with the right metadata from the iceberg formated metadata files but it didn't work and we couldn't figure why
+   - The broken broken file wasn't added to the project
+
+   If you want to run all the files from all the machine change the line 374 in the file `duckdb_to_star_schema_machine_1` from `if table_name[0].isdigit() and table_name.startswith("1001"):` to `if table_name[0].isdigit() and table_name.startswith("1"):` 
+   and line 463 in the file `duckdb_to_star_schema_machine_2` from `if table_name[0].isdigit() and table_name.startswith("2008"):` to `if table_name[0].isdigit() and table_name.startswith("2"):` 
 
 9. **Star Schema → Iceberg**
    - Store final star schema in Iceberg format
