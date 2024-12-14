@@ -177,7 +177,10 @@ services:
     volumes:
       - ./mnt/tmp/duckdb_data:/app/data
       - .:/opt/airflow/project_data
-    entrypoint: "airflow db init"
+    entrypoint: >
+            bash -c "
+            airflow db init && 
+            airflow users create --username group8 --firstname first --lastname last --role Admin --email admin@noair.org --password group8"
     networks:
       - iceberg_network
 

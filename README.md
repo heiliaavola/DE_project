@@ -1,21 +1,68 @@
 # DE_Project
 
-## How to Run
+Data processing pipeline using Apache Airflow to transform machine data and metadata into Apache Iceberg format.
 
-Start the containers:
-docker compose up -d 
+## Prerequisites
 
-## Accessing Airflow
+- Docker and Docker Compose
+- At least 4GB RAM
 
-Access the Airflow web interface at:
-http://localhost:8080/ 
+## Quick Start
 
-Create an Airflow admin user with this command:
-docker exec airflow-webserver airflow users create --username airflow --password airflow --firstname first --lastname last --role Admin --email admin@airflow.org 
+1. Start the containers:
+```bash
+docker compose up -d
+```
 
-## DAG Descriptions
+2. Access Airflow UI:
+- URL: http://localhost:8080
+- Username: group8
+- Password: group8
 
-1. upload_raw_files.py: Uploads .ndax and .dat data from airflow/project_data/anonymized_data_package folder to MinIO file storage at data/raw-data
-1. dat_to_parquet.py: Converts machine2 data from .dat files to .parquet files and saves them to MinIO file storage at data/bronze/
-1. parquet_to_iceberg.py: Converts machine2 data from .parquet to iceberg formated .parquet files and saves them to MinIO file storage at data/warehouse/silver/machine_2
-1. iceberg_to_duckdb: Work in progress
+## Project Structure
+```
+DE_PROJECT/
+├── airflow/
+│   ├── dags/
+│   │   ├── tasks/           # Individual pipeline tasks
+│   │   └── pipeline_dag.py  # Main DAG definition
+│   └── Dockerfile
+└── project_data/
+    └── anonymized_data_package/
+        ├── machine_1/
+        ├── machine_1_metadata/
+        ├── machine_2/
+        └── metadata.xlsx
+```
+
+## Pipeline Flow
+
+1. **Upload Raw Files**
+   - Uploads .xlsx and .dat files from project_data/anonymized_data_package to MinIO (data/raw-data)
+
+2. **Excel Metadata to MongoDB**
+   - Converts Excel files to JSON
+   - Stores as BSON in MongoDB
+
+3. **Data Transformations**
+   - Excel to Parquet: Converts machine data Excel files
+   - DAT to Parquet: Converts machine2 .dat files to Parquet (data/bronze/)
+   - MongoDB to Parquet: Converts stored BSON files to Parquet
+
+4. **Parquet to Iceberg**
+   - Converts all Parquet files (machine_1, machine_2, metadata) to Iceberg format
+
+5. **Iceberg to DuckDB**
+   - Work in progress
+
+## Services
+
+- **Airflow**: http://localhost:8080
+- **MinIO**: http://localhost:9001 (minioadmin/minioadmin)
+- **MongoDB**: localhost:27017 (root/example)
+
+## Troubleshooting
+
+- Check Airflow task logs in UI for failures
+- Verify MinIO bucket and MongoDB database existence
+- Ensure sufficient system resources
