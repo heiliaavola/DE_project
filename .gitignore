@@ -1,2 +1,4 @@
 __pycache__
 local
+airflow/project_data/anonymized_data_package/machine_1_metadata
+airflow_vana

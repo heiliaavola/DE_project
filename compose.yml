@@ -5,7 +5,7 @@ services:
     container_name: duckdb
     image: python:3.12.7-slim-bookworm
     build:
-      context: .
+      context: ./duckdb
     volumes:
       - ../mnt/tmp/duckdb_data:/app/data
     stdin_open: true
@@ -14,6 +14,19 @@ services:
       PYICEBERG_HOME: /app/data   
     networks:
       iceberg_network:
+  mongodb:
+    image: mongo:7.0
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      iceberg_network:
+    restart: always
   minio:
     image: minio/minio:RELEASE.2024-10-13T13-34-11Z
     container_name: minio
@@ -26,7 +39,7 @@ services:
       MINIO_DOMAIN: minio
     command: server /data --console-address ":9001"
     volumes:
-      - ../mnt/tmp/minio_data:/data
+      - minio-data:/data
     networks:
       iceberg_network:
         aliases:
@@ -99,6 +112,7 @@ services:
       - PYICEBERG_CATALOG__REST__S3__SECRET_ACCESS_KEY=minioadmin
       - PYICEBERG_CATALOG__REST__S3__PATH_STYLE_ACCESS=true
       - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
+      - MONGODB_CONNECTION_STRING=mongodb://root:example@mongodb:27017/
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./mnt/tmp/duckdb_data:/app/data
@@ -110,6 +124,7 @@ services:
       - postgres
       - minio
       - iceberg_rest
+      - mongodb
     restart: always
     command: webserver
     networks:
@@ -134,6 +149,7 @@ services:
       - PYICEBERG_CATALOG__REST__S3__SECRET_ACCESS_KEY=minioadmin
       - PYICEBERG_CATALOG__REST__S3__PATH_STYLE_ACCESS=true
       - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
+      - MONGODB_CONNECTION_STRING=mongodb://root:example@mongodb:27017/
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./mnt/tmp/duckdb_data:/app/data
@@ -143,6 +159,7 @@ services:
       - postgres
       - minio
       - iceberg_rest
+      - mongodb
     restart: always
     command: scheduler
     user: root
@@ -170,3 +187,5 @@ networks:
 
 volumes:
   postgres-db-volume:
+  mongodb-data:
+  minio-data:
