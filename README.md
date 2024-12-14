@@ -4,11 +4,12 @@ Authors: Annabel Hiiu, Anett Sandberg, Heili Aavola
 
 ## Background
 
-This data engineering project is based on measurement data originally provided by the R&D team at **OÜ Stargate Hydrogen Solutions**. The company manufactures electrolyzers, and the data focuses on measurements that compare different electrode materials.
+This data engineering project is based on measurement data originally provided by the R&D team at **OÜ Stargate Hydrogen Solutions**.  
+The company manufactures electrolyzers, and the data focuses on measurements that compare different electrode materials.
 
 The raw data, which has been pseudonymized for this project, primarily comes from two machines:
 - **Machine 1**: Long-term and short-term measurements `.ndax` format (10 files)
-- **Machine 2**: Measurements in `.dat` format (10 files)
+- **Machine 2**: Measurements in `.dat` format (10 files)  
 and metadata for each measurement in `.xlsx` format
 
 ### Key Questions to Answer
@@ -29,9 +30,10 @@ Data processing pipeline using Apache Airflow to transform machine data and meta
 - **DuckDB**: Embedded analytics database
 - **Python (3.12.7):** Programming language
 - **Docker & Docker Compose:** Containerization
+- **Jupyter Notebook:** Converting `.ndax` to `.xlsx` outside Docker
 - **Data privacy:** More on that below 
 
-## Prerequisites (this has been done for you)
+## Prerequisites (this has been already done for you)
 
 **Reading in ndax files and converting them to excel**  
 - With Jupyter notebook `ndax_to_excel.ipynb` ndax files are read in from the `anonymized_data_package/machine_1` folder. 
@@ -40,10 +42,10 @@ Data processing pipeline using Apache Airflow to transform machine data and meta
 
 **Reason**  
 - We have decided not to include this step in the Airflow orchestrated pipeline due to issue in Docker on MacOS. 
-- The code uses package LimeNDAX that has a function get_records(). For this to work it needs to create temdata folder.
+- The code uses package LimeNDAX that has a function get_records(). For this to work it needs to create temdata folder but creating and accessing this folder is a issue for MacOS.
 - So excel files are already included in `airflow/project_data/anonymized_data_package/machine_1`.  
 
-**Only for brave person**
+**Running the notebook**
 - If you are brave (and have a Windows) then you can test it out (don't forget to `pip install LimeNDAX`) but to continue with pipeline you have to delete the duplicated excel files in the `airflow/project_data/anonymized_data_package/machine_1`.  
 
 ## Quick Start
@@ -101,6 +103,7 @@ Note: Tasks 3-5 run sequentially to avoid resource deadlock errors (`[Errno 35]`
 
 6. **Parquet → Iceberg**
    - Convert Parquet files to Iceberg format
+   - Stored in MinIO warehouse/silver bucket
 
 7. **Iceberg → DuckDB**
    - Load Iceberg tables into DuckDB
@@ -111,15 +114,10 @@ Note: Tasks 3-5 run sequentially to avoid resource deadlock errors (`[Errno 35]`
    - Here we decided not to read in all the files just to be human. 
    - We estimate it to take over an hour. 
    - Instead we read in only one file from machine_1, machine_2, machine_1_metadata and machine_2_metadata. 
-   - If you have curios mind then you can run all of the files with following guidelines.
-
-   ### Processing All Files (Optional)
-
-   **guidelines how to read in all files**
-
 
 9. **Star Schema → Iceberg**
    - Store final star schema in Iceberg format
+   - Stored in MinIO warehouse/gold bucket
 
 ## Data Flow Structure
 
