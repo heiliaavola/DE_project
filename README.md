@@ -165,3 +165,4 @@ docker ps
 - Preserves the structure and relationships within the dataset.
 - Complies with certain privacy regulations by allowing for authorized re-identification when necessary.
 - Facilitates research and analysis without exposing the original sensitive information → a key factor in gaining approval from **OÜ Stargate Hydrogen Solutions** to use the data.
+

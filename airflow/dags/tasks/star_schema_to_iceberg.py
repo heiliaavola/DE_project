@@ -66,7 +66,7 @@ def star_schema_to_iceberg(**context):
             "dim_operator",
             "dim_electrode_material",
             "dim_dat_metadata",
-            "fact_ndax_measurements",
+            "fact_excel_measurements",
             "fact_dat_measurements"
         ]
 
@@ -104,17 +104,6 @@ def star_schema_to_iceberg(**context):
                 table = catalog.load_table(full_table_name)
                 table.append(arrow_table)
                 print(f"Appended data to Iceberg table: {full_table_name}")
-                #schema = arrow_table.schema
-                #table = catalog.create_table(
-                #    identifier=full_table_name,
-                #    schema=schema,
-                #    location=iceberg_table_path,
-                #)
-                #print(f"Created Iceberg table: {full_table_name}")
-
-                # Append data to the Iceberg table
-                #table.append(arrow_table)
-                #print(f"Appended data to Iceberg table: {full_table_name}")
 
             except Exception as e:
                 print(f"Error processing table {table_name}: {str(e)}")

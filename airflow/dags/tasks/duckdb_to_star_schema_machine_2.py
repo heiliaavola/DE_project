@@ -12,7 +12,7 @@ def create_star_schema(**context):
 
     try:
         # Create dimension tables
-        conn.execute("""DROP TABLE IF EXISTS dim_machine""")
+
         conn.execute("""
             CREATE TABLE IF NOT EXISTS dim_machine (
             machine_id INTEGER NOT NULL PRIMARY KEY,
@@ -21,7 +21,6 @@ def create_star_schema(**context):
             );
         """)
 
-        conn.execute("""DROP TABLE IF EXISTS dim_measurement""")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS dim_measurement (
                 measurement_id INTEGER NOT NULL PRIMARY KEY,
@@ -42,7 +41,6 @@ def create_star_schema(**context):
             );
         """)
 
-        #conn.execute("""DROP TABLE IF EXISTS dim_time""")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS dim_time (
                 time_id INTEGER NOT NULL,
@@ -54,7 +52,6 @@ def create_star_schema(**context):
             );
         """)
 
-        conn.execute("""DROP TABLE IF EXISTS dim_operator""")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS dim_operator (
                 operator_id INTEGER NOT NULL,
@@ -64,7 +61,6 @@ def create_star_schema(**context):
             );
         """)
 
-        conn.execute("""DROP TABLE IF EXISTS dim_electrode_material""")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS dim_electrode_material (
                 electrode_material_id INTEGER NOT NULL,
@@ -73,7 +69,6 @@ def create_star_schema(**context):
             );
         """)
 
-        conn.execute("""DROP TABLE IF EXISTS dim_dat_metadata""")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS dim_dat_metadata (
                 dat_metadata_id INTEGER,
@@ -92,56 +87,31 @@ def create_star_schema(**context):
             );
         """)
 
-        # Create fact tables
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS fact_ndax_measurements (
-                fact_ndax_measurement_id INTEGER NOT NULL,
-                measurement_id BIGINT NOT NULL,
-                machine_id BIGINT NOT NULL,
-                operator_id BIGINT NOT NULL,
-                date_id BIGINT NOT NULL,
-                time_id BIGINT NOT NULL,
-                electrode_material_id BIGINT NOT NULL,
-                timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-                record_id BIGINT NOT NULL,
-                cycle BIGINT NOT NULL,
-                step_id BIGINT NOT NULL,
-                step_name VARCHAR(50) NOT NULL,
-                time_in_step NUMERIC(18,8) NOT NULL,
-                voltage_v NUMERIC(18,8) NOT NULL,
-                current_ma NUMERIC(18,8) NOT NULL,
-                capacity_mah NUMERIC(18,8) NOT NULL,
-                energy_mwh NUMERIC(18,8) NOT NULL,
-                PRIMARY KEY (fact_ndax_measurement_id)
-            );
-        """)
-
-        conn.execute("""DROP TABLE IF EXISTS fact_dat_measurements""")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS fact_dat_measurements (
                 fact_dat_measurement_id INTEGER NOT NULL,
                 machine_id BIGINT NOT NULL,
                 measurement_id BIGINT NOT NULL,
                 timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-                operator_id BIGINT,
                 date_id BIGINT NOT NULL,
                 time_id BIGINT NOT NULL,
                 electrode_material_id BIGINT NOT NULL,
                 dat_metadata_id BIGINT,
                 voltage_v NUMERIC(10,4),
+		        current_a NUMERIC(10,4),
                 h2_flow NUMERIC(10,4),
                 o2_flow NUMERIC(10,4),
                 h2_purity_percent NUMERIC(10,4),
                 o2_purity_percent NUMERIC(10,4),
-                current_a NUMERIC(10,4),
                 h2_pressure_bar NUMERIC(10,4),
                 o2_pressure_bar NUMERIC(10,4),
-                set_pressure_bar NUMERIC(10,4),
+                h2_level_percent NUMERIC(10,4),
+                o2_level_percent NUMERIC(10,4),
+		        set_pressure_bar NUMERIC(10,4),
                 cathode_temp_c NUMERIC(10,4),
                 anode_temp_c NUMERIC(10,4),
                 cell_inlet_temp_c NUMERIC(10,4),
-                h2_level_percent NUMERIC(10,4),
-                o2_level_percent NUMERIC(10,4),
+		        operator_id BIGINT,
                 PRIMARY KEY (fact_dat_measurement_id)
             );
         """)
@@ -161,9 +131,9 @@ def populate_star_schema(**kwargs):
         tables = conn.execute("SHOW TABLES;").fetchall()
 
         # 1. INSERTING DATA INTO dim_machine
-        for table in tables:
+        for table in tables :
             table_name = table[0]
-            if table_name[0].isdigit(): 
+            if table_name[0].isdigit() and table_name.startswith("2"): 
                 # Extract the first number as machine_id
                 machine_id = int(table_name[0])
                 machine_name = f"machine_{machine_id}"
@@ -198,7 +168,7 @@ def populate_star_schema(**kwargs):
         # 2. INSERTING DATA INTO dim_machine
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit(): 
+            if table_name[0].isdigit() and table_name.startswith("2"): 
 
                 # Extract measurement_name from the table name
                 measurement_name = table_name.split("_")[0]
@@ -243,7 +213,7 @@ def populate_star_schema(**kwargs):
         # 3. INSERTING DATA INTO dim_date
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit(): 
+            if table_name[0].isdigit() and table_name.startswith("2"): 
                 # Extract distinct dates from the table
                 query = f"""
                     SELECT DISTINCT CAST(TimeStamp AS DATE) AS date
@@ -290,7 +260,7 @@ def populate_star_schema(**kwargs):
         # 4. INSERTING DATA INTO dim_time
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit():  
+            if table_name[0].isdigit() and table_name.startswith("2"):  
                 # Extract distinct times (hour, minute, second) from the TimeStamp column
                 query = f"""
                     SELECT DISTINCT 
@@ -337,7 +307,7 @@ def populate_star_schema(**kwargs):
         #5. INSERTING DATA INTO dim_operator
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit():  
+            if table_name[0].isdigit() and table_name.startswith("2"):  
                 # Extract distinct operators from the table
                 query = f"""
                     SELECT DISTINCT "Operator" AS operator_name
@@ -380,7 +350,7 @@ def populate_star_schema(**kwargs):
         #6. INSERTING DATA INTO dim_electrode_material
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit():
+            if table_name[0].isdigit() and table_name.startswith("2"):
                 # Extract distinct electrode materials from the "Electrodes" column!!!!!!!!!!!!!!!!!!!!!!!!!
                 query = f"""
                     SELECT DISTINCT "Electrodes" AS electrode_material
@@ -423,7 +393,7 @@ def populate_star_schema(**kwargs):
         # 7. INSERTING DATA INTO dim_dat_metadata (ONLY FOR MACHINE_2)
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit() and table_name.startswith("2001"): #We are inserting into dim_dat_metadata only the data we got from machine_2
+            if table_name[0].isdigit() and table_name.startswith("2"): #We are inserting into dim_dat_metadata only the data we got from machine_2
                 # Extract distinct metadata rows from the table
                 query = f"""
                     SELECT DISTINCT 
@@ -488,10 +458,10 @@ def populate_star_schema(**kwargs):
             print(row)
 
         #8. INSERT DATA INTO fact_dat_measurements (ONLY FOR MACHINE_2)
-        # 8. INSERT DATA INTO fact_dat_measurements (ONLY FOR MACHINE_2)
         for table in tables:
             table_name = table[0]
-            if table_name[0].isdigit() and table_name.startswith("2008"):  # Only process machine_2 data
+            if table_name[0].isdigit() and table_name.startswith("2008"): #NB! SIIN KIIRUSE PÄRAST LOEME SISSE AINULT 1 FAILI INFO
+            #if table_name[0].isdigit() and table_name.startswith("2"):
                 # Query to fetch all rows from the table
                 query = f"""
                     SELECT 
@@ -598,21 +568,22 @@ def populate_star_schema(**kwargs):
 
                     # Append the row to the batch
                     batch.append((
-                        max_fact_id, machine_id, measurement_id, timestamp, operator_id, date_id, time_id,
-                        electrode_material_id, dat_metadata_id, voltage_v, h2_flow, o2_flow, h2_purity_percent,
-                        o2_purity_percent, current_a, h2_pressure_bar, o2_pressure_bar, set_pressure_bar,
-                        cathode_temp_c, anode_temp_c, cell_inlet_temp_c, h2_level_percent, o2_level_percent
+                        max_fact_id, machine_id, measurement_id, timestamp, date_id, time_id, 
+                        electrode_material_id, dat_metadata_id, voltage_v, current_a, h2_flow, o2_flow,
+                        h2_purity_percent, o2_purity_percent, h2_pressure_bar, o2_pressure_bar,
+                        h2_level_percent, o2_level_percent, set_pressure_bar, cathode_temp_c, 
+                        anode_temp_c, cell_inlet_temp_c, operator_id
                     ))
 
                     # Insert batch when batch size is met
                     if len(batch) >= batch_size:
                         conn.executemany("""
                             INSERT INTO fact_dat_measurements (
-                                fact_dat_measurement_id, machine_id, measurement_id, timestamp, operator_id, date_id, 
-                                time_id, electrode_material_id, dat_metadata_id, voltage_v, h2_flow, o2_flow, 
-                                h2_purity_percent, o2_purity_percent, current_a, h2_pressure_bar, o2_pressure_bar, 
-                                set_pressure_bar, cathode_temp_c, anode_temp_c, cell_inlet_temp_c, h2_level_percent, 
-                                o2_level_percent
+                                fact_dat_measurement_id, machine_id, measurement_id, timestamp, date_id, time_id,
+                                electrode_material_id, dat_metadata_id, voltage_v, current_a, h2_flow, o2_flow,
+                                h2_purity_percent, o2_purity_percent, h2_pressure_bar, o2_pressure_bar, 
+                                h2_level_percent, o2_level_percent, set_pressure_bar, cathode_temp_c, 
+                                anode_temp_c, cell_inlet_temp_c, operator_id
                             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                         """, batch)
                         batch = []
@@ -621,13 +592,14 @@ def populate_star_schema(**kwargs):
                 if batch:
                     conn.executemany("""
                         INSERT INTO fact_dat_measurements (
-                            fact_dat_measurement_id, machine_id, measurement_id, timestamp, operator_id, date_id, 
-                            time_id, electrode_material_id, dat_metadata_id, voltage_v, h2_flow, o2_flow, 
-                            h2_purity_percent, o2_purity_percent, current_a, h2_pressure_bar, o2_pressure_bar, 
-                            set_pressure_bar, cathode_temp_c, anode_temp_c, cell_inlet_temp_c, h2_level_percent, 
-                            o2_level_percent
+                            fact_dat_measurement_id, machine_id, measurement_id, timestamp, date_id, time_id,
+                            electrode_material_id, dat_metadata_id, voltage_v, current_a, h2_flow, o2_flow,
+                            h2_purity_percent, o2_purity_percent, h2_pressure_bar, o2_pressure_bar, 
+                            h2_level_percent, o2_level_percent, set_pressure_bar, cathode_temp_c, 
+                            anode_temp_c, cell_inlet_temp_c, operator_id
                         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                     """, batch)
+
 
                 print(f"Finished inserting rows from table {table_name} into fact_dat_measurements.")
 
@@ -636,6 +608,20 @@ def populate_star_schema(**kwargs):
         print("Fact table fact_dat_measurements created. Example rows:")
         for row in results:
             print(row)
+        print("Fact table fact_dat_measurements created. Example rows:")
+        for row in results:
+            print(f"""
+                fact_dat_measurement_id: {row[0]}, machine_id: {row[1]}, measurement_id: {row[2]}, 
+                timestamp: {row[3]}, date_id: {row[4]}, time_id: {row[5]}, 
+                electrode_material_id: {row[6]}, dat_metadata_id: {row[7]}, voltage_v: {row[8]}, 
+                current_a: {row[9]}, h2_flow: {row[10]}, o2_flow: {row[11]}, 
+                h2_purity_percent: {row[12]}, o2_purity_percent: {row[13]}, 
+                h2_pressure_bar: {row[14]}, o2_pressure_bar: {row[15]}, 
+                h2_level_percent: {row[16]}, o2_level_percent: {row[17]}, 
+                set_pressure_bar: {row[18]}, cathode_temp_c: {row[19]}, 
+                anode_temp_c: {row[20]}, cell_inlet_temp_c: {row[21]}, operator_id: {row[22]}
+            """)
+
 
   
     finally:
@@ -643,7 +629,7 @@ def populate_star_schema(**kwargs):
 
 
 
-def duckdb_to_star_schema(**kwargs):
+def duckdb_to_star_schema_machine_2(**kwargs):
     """Create star schema and populate it with data from DuckDB."""
     create_star_schema(**kwargs)
     populate_star_schema(**kwargs)
@@ -666,6 +652,6 @@ with DAG(
 def get_duckdb_to_star_schema_machine_2_task(dag):
     return PythonOperator(
         task_id='duckdb_to_star_schema_machine_2',
-        python_callable=duckdb_to_star_schema,
+        python_callable=duckdb_to_star_schema_machine_2,
         dag=dag
     )

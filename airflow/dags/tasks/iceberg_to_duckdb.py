@@ -66,15 +66,11 @@ def iceberg_to_duckdb(**context):
                         # Print first 20 rows
                         print(f"\nFirst 20 rows of table  {table_name}:")
                         try:
-                           # rows = conn.execute(f'SELECT * FROM "{table_name}" LIMIT 20').fetchall()
+                            rows = conn.execute(f'SELECT * FROM "{table_name}" LIMIT 20').fetchall()
                             #conn.execute(f'SELECT "Voltage [V]" FROM "{table_name}" LIMIT 20').fetchall()
-                            #for row in rows:
-                            #    print(row)
-                         # Fetch a specific column (e.g., "Voltage [V]")
-                            specific_column_data = conn.execute(f'SELECT "Voltage [V]" FROM "{table_name}" LIMIT 20').fetchall()
-                            print(f"\nFirst 20 rows of column 'Voltage [V]' in table {table_name}:")
-                            for row in specific_column_data:
+                            for row in rows:
                                 print(row)
+
                         except Exception as e:
                             print(f"Error fetching rows from table {table_name}: {e}")
     
@@ -90,6 +86,7 @@ def iceberg_to_duckdb(**context):
 
     finally:
         conn.close()
+
 """
 # Create the DAG
 with DAG(

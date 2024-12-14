@@ -495,7 +495,7 @@ def duckdb_to_star_schema_machine_1(**kwargs):
     create_star_schema(**kwargs)
     populate_star_schema(**kwargs)
 
-
+"""
 # Create the DAG
 with DAG(
     'duckdb_to_star_schema_machine_1',
@@ -508,4 +508,12 @@ with DAG(
     duckdb_to_star_schema_machine_1 = PythonOperator(
         task_id='duckdb_to_star_schema_machine_1',
         python_callable=duckdb_to_star_schema_machine_1
+    )
+"""
+
+def get_duckdb_to_star_schema_machine_1_task(dag):
+    return PythonOperator(
+        task_id='duckdb_to_star_schema_machine_1',
+        python_callable=duckdb_to_star_schema_machine_1,
+        dag=dag
     )
