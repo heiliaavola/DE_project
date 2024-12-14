@@ -81,11 +81,10 @@ NDAX → Excel → MongoDB/MinIO → Parquet → Iceberg → DuckDB → Star Sch
 
 ## Known Issues
 
-1. **MacOS DuckDB Issues**
+1. **MacOS Issues**
    - Error: `[Errno 2] No such file or directory: '.\temdata'`
    - Error: `[Errno 35] Resource deadlock avoided`
    - Impact: NDAX to Excel conversion fails in Docker containers on MacOS
-   - Workaround: Use Jupyter notebook for NDAX conversion step
 
 ## Troubleshooting
 
