@@ -59,7 +59,7 @@ def parquet_to_iceberg(**context):
             
             # Create Iceberg table using DuckDB
             iceberg_table_dir = f"silver/{parquet_file.replace('.parquet', '')}_iceberg"
-            iceberg_table_path = f"s3://warehouse/{iceberg_table_dir}"
+            iceberg_table_path = f"s3://warehouse/{iceberg_table_dir}" #ANETT: MA ARVAN, ET SIIN SEE warehouse ÜLELIIGNE, AGA EI KONTROLLINUD
             
             # Read the Parquet data using DuckDB
             with duckdb.connect() as conn:
@@ -83,7 +83,7 @@ def parquet_to_iceberg(**context):
                 print("select worked")
                 arrow_table = conn.sql(f"SELECT * FROM tmp").arrow()
                 print("arrow worked")
-                schema = arrow_table.schema
+                schema = arrow_table.schema #Get Iceberg Schema 
                 print("schema worked")
             
                 

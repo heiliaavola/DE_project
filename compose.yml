@@ -5,13 +5,13 @@ services:
     container_name: duckdb
     image: python:3.12.7-slim-bookworm
     build:
-      context: .
+      context: ./duckdb
     volumes:
       - ../mnt/tmp/duckdb_data:/app/data
     stdin_open: true
     tty: true
     environment:
-      PYICEBERG_HOME: /app/data   
+      PYICEBERG_HOME: /app/data   #VIST LEIAB SIIT .pyiceberg.yaml-i
     networks:
       iceberg_network:
   minio:
@@ -93,7 +93,7 @@ services:
       - MINIO_ROOT_PASSWORD=minioadmin
       - MINIO_ENDPOINT=minio:9000
       - PYICEBERG_CATALOG__REST__URI=http://iceberg_rest:8181
-      - PYICEBERG_CATALOG__REST__WAREHOUSE=s3://warehouse
+      - PYICEBERG_CATALOG__REST__WAREHOUSE=s3://warehouse         #NEED ASJAD ON KA duckdb/.pyiceberg.yaml-is NII ET PEAKS KATSETAMA, KAS VÕIB SIIT ÄRA VÕTTA
       - PYICEBERG_CATALOG__REST__S3__ENDPOINT=http://minio:9000
       - PYICEBERG_CATALOG__REST__S3__ACCESS_KEY_ID=minioadmin
       - PYICEBERG_CATALOG__REST__S3__SECRET_ACCESS_KEY=minioadmin

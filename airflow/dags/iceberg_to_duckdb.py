@@ -3,13 +3,14 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import duckdb
 from pyiceberg.catalog import load_catalog
+import pyarrow as pa
 
 def iceberg_to_duckdb(**context):
     """Read Iceberg tables using catalog and load them into DuckDB."""
     # Initialize DuckDB connection
-    duckdb_path = "/app/data/warehouse.duckdb" # kahtlane, ei saa otseselt aru, et miks just see
+    duckdb_path = "/app/data/warehouse.duckdb"
     conn = duckdb.connect(duckdb_path)
-    
+
     try:
         # Configure DuckDB S3 settings
         conn.execute("""
@@ -22,81 +23,84 @@ def iceberg_to_duckdb(**context):
             SET s3_secret_access_key='minioadmin';
             SET s3_use_ssl=false;
         """)
-        
+
         # Install and load Iceberg extension
         conn.execute("INSTALL iceberg")
         conn.execute("LOAD iceberg")
-        
+
         # Load Iceberg catalog
         try:
-            catalog = load_catalog(name="rest") # catalogi loomine on failis mnt/tmp/duckdb_data/.pyiceberg.yaml
+            catalog = load_catalog(name="rest")
         except Exception as e:
             print(f"Problems with catalog: {e}")
-        
+
         try:
             # List all tables in the default namespace
-            tables = catalog.list_tables("default") # default on namespace nimi - võtsin praksist
-            
-            for namespace, table_name in tables:
+            tables = catalog.list_tables("default")
+
+            # Process each Iceberg table
+            for namespace, table_name in catalog.list_tables("default"):
                 try:
-                    # Construct full table identifier
                     full_table_name = f"{namespace}.{table_name}"
-                    
                     print(f"Processing Iceberg table: {full_table_name}")
-                    
-                    # Load table from catalog
+
                     iceberg_table = catalog.load_table((namespace, table_name))
-                    
-                    # Get table location
-                    table_location = iceberg_table.location()
-                    print(f"Table location: {table_location}")
-                    
-                    # Create DuckDB table from Iceberg data
-                    create_table_sql = f"""
-                        CREATE OR REPLACE TABLE {table_name} AS 
-                        SELECT * FROM iceberg_scan(
-                            '{table_location}',
-                            aws_access_key_id='minioadmin',
-                            aws_secret_access_key='minioadmin',
-                            endpoint='minio:9000',
-                            region='us-east-1',
-                            url_style='path',
-                            use_ssl=false
-                        );
-                    """
-                    
-                    conn.execute(create_table_sql)
-                    print(f"Successfully loaded {table_name} into DuckDB")
-                    
-                    # Verify the data
-                    row_count = conn.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
-                    print(f"Table {table_name} contains {row_count} rows")
-                    
-                    # Show sample of data
-                    print(f"Sample of data from {table_name}:")
-                    conn.execute(f"SELECT * FROM {table_name} LIMIT 5").show()
-                    
+                    arrow_table = iceberg_table.scan().to_arrow()
+
+                    # Register Arrow table with DuckDB and save it as a separate table
+                    conn.register("temp_arrow_table", arrow_table)
+                    # Quote the table name to handle numeric or special characters
+                    duckdb_table_name = f'"{table_name.replace(".", "_")}"'
+                    conn.execute(f"CREATE OR REPLACE TABLE {duckdb_table_name} AS SELECT * FROM temp_arrow_table")
+
+                    print(f"Saved table {full_table_name} as {duckdb_table_name} in DuckDB")
+
+            
+                    # Show sample data for each table in the database
+                    tables = conn.execute('SHOW TABLES').fetchall()
+                    print("Tables in DuckDB:")
+                    for table in tables:
+                        # Extract the table name
+                        table_name = table[0]
+
+                        # Print first 20 rows
+                        print(f"\nFirst 20 rows of table  {table_name}:")
+                        try:
+                           # rows = conn.execute(f'SELECT * FROM "{table_name}" LIMIT 20').fetchall()
+                            #conn.execute(f'SELECT "Voltage [V]" FROM "{table_name}" LIMIT 20').fetchall()
+                            #for row in rows:
+                            #    print(row)
+                         # Fetch a specific column (e.g., "Voltage [V]")
+                            specific_column_data = conn.execute(f'SELECT "Voltage [V]" FROM "{table_name}" LIMIT 20').fetchall()
+                            print(f"\nFirst 20 rows of column 'Voltage [V]' in table {table_name}:")
+                            for row in specific_column_data:
+                                print(row)
+                        except Exception as e:
+                            print(f"Error fetching rows from table {table_name}: {e}")
+    
+
                 except Exception as e:
                     print(f"Error processing table {full_table_name}: {str(e)}")
                     raise
-                    
+
+
         except Exception as e:
             print(f"Error listing tables from catalog: {str(e)}")
             raise
-            
+
     finally:
         conn.close()
 
 # Create the DAG
 with DAG(
     'iceberg_to_duckdb',
-    schedule_interval=None,  # Manual trigger
+    schedule_interval=None,
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['transform']
 ) as dag:
 
-    load_to_duckdb_task = PythonOperator(
+    iceberg_to_duckdb = PythonOperator(
         task_id='iceberg_to_duckdb',
         python_callable=iceberg_to_duckdb
     )

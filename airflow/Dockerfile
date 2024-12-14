@@ -14,11 +14,12 @@ RUN apt-get update && apt-get install -y \
 
 USER airflow
 
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir \
-    duckdb \
-    "pyarrow>=10.0.1,<10.1.0" \
-    boto3 \
-    pyiceberg \
-    thrift \
-    openpyxl
+RUN pip install --upgrade pip
+RUN pip install pyarrow==18.1.0 pyiceberg==0.8.0 duckdb boto3 thrift openpyxl
+#    pip install --no-cache-dir \
+#duckdb \
+#"pyarrow>=10.0.1,<10.1.0" \
+#boto3 \
+#pyiceberg \
+#thrift \
+#openpyxl
