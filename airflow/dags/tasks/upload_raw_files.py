@@ -70,6 +70,7 @@ def upload_raw_data(**context):
     
     return uploaded_files
 
+"""
 with DAG(
     'upload_raw_files',
     schedule_interval=None,
@@ -80,5 +81,13 @@ with DAG(
 
     upload_task = PythonOperator(
         task_id='upload_raw_files',
-        python_callable=upload_raw_data
+        python_callable=upload_raw-data
+    )
+"""
+
+def get_upload_task(dag):
+    return PythonOperator(
+        task_id='upload_raw_files',
+        python_callable=upload_raw_data,
+        dag=dag
     )

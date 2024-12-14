@@ -38,7 +38,7 @@ def extract_metadata_and_data(file_content, start_marker):
     
     return metadata, df
 
-def convert_to_parquet(**context):
+def convert_dat_to_parquet(**context):
     """Convert DAT files from MinIO to Parquet"""
     # Initialize MinIO client
     s3 = boto3.client('s3',
@@ -101,6 +101,7 @@ def convert_to_parquet(**context):
     except Exception as e:
         print(f"Error listing bronze bucket contents: {str(e)}")
 
+"""
 with DAG(
     'dat_to_parquet',
     schedule_interval=None,  # Manual trigger
@@ -111,5 +112,13 @@ with DAG(
 
     convert_task = PythonOperator(
         task_id='convert_to_parquet',
-        python_callable=convert_to_parquet
+        python_callable=convert_dat_to_parquet
+    )
+"""
+
+def get_convert_dat_to_parquet_task(dag):
+    return PythonOperator(
+        task_id='dat_to_parquet',
+        python_callable=convert_dat_to_parquet,
+        dag=dag
     )

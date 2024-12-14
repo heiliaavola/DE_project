@@ -1,4 +1,4 @@
 __pycache__
 local
-airflow_vana
 airflow/project_data/anonymized_data_package/metadata_json
+airflow_vana

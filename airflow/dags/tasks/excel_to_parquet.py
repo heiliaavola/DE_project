@@ -5,7 +5,7 @@ import boto3
 import pandas as pd
 import tempfile
 
-def convert_to_parquet(**context):
+def convert_excel_to_parquet(**context):
     """Convert Excel files from MinIO to Parquet"""
     # Initialize MinIO client
     s3 = boto3.client('s3',
@@ -76,7 +76,7 @@ def convert_to_parquet(**context):
             print(f"- {obj['Key']} (Size: {obj['Size']} bytes)")
     except Exception as e:
         print(f"Error listing bronze bucket contents: {str(e)}")
-
+"""
 with DAG(
     'excel_to_parquet',
     schedule_interval=None,  # Manual trigger
@@ -87,5 +87,13 @@ with DAG(
 
     convert_task = PythonOperator(
         task_id='convert_to_parquet',
-        python_callable=convert_to_parquet
+        python_callable=convert_excel_to_parquet
+    )
+"""
+
+def get_convert_excel_to_parquet_task(dag):
+    return PythonOperator(
+        task_id='excel_to_parquet',
+        python_callable=convert_excel_to_parquet,
+        dag=dag
     )

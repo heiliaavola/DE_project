@@ -40,7 +40,7 @@ docker compose up -d
 
 1. **Upload Raw Files**
    - Source: project_data/anonymized_data_package
-   - Destination: MinIO (data/raw_data)
+   - Destination: MinIO (data/raw-data)
    - Handles: .xlsx and .dat files
 
 2. **Excel Metadata → MongoDB**

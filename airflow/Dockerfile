@@ -16,7 +16,7 @@ USER airflow
 
 RUN pip install --upgrade pip
 #Anetil töötab (-> parquet to iceberg ERROR: Iceberg does not yet support 'ns' timestamp precision)
-RUN pip install pyarrow==18.1.0 pyiceberg==0.8.0 duckdb boto3 thrift openpyxl 
+RUN pip install pyarrow==18.1.0 pyiceberg==0.8.0 duckdb boto3 thrift openpyxl pymongo
 
 #Ima pyicebergi versioonita (-> parquet to iceberg ERROR: Iceberg does not yet support 'ns' timestamp precision)
 #RUN pip install pyarrow==18.1.0 pyiceberg duckdb boto3 thrift openpyxl 
