@@ -111,9 +111,9 @@ Note: Tasks 3-5 run sequentially to avoid resource deadlock errors (`[Errno 35]`
 8. **DuckDB → Star Schema**
    - Transform data into star schema for each machine
    - Separate transformations for machine_1 and machine_2 
-   - Here we decided not to read in all the files just to be human. 
-   - We estimate it to take over an hour. 
-   - Instead we read in only one file from machine_1, machine_2, machine_1_metadata and machine_2_metadata. 
+   - We estimate it to take over an hour so we decided not to read in all the files yet 
+   - Instead we read in only one file from machine_1 and machine_2 
+   - We tried to overwrite temporary metadata with the right one from metadata files but it didn't work and we couldn't figure why
 
 9. **Star Schema → Iceberg**
    - Store final star schema in Iceberg format
