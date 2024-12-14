@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="GB2312"?>
+<root>
+  <config type="Step File" version="17" client_version="BTSDA 8.0.0.526(2024.02.23)(R3)" date="20241008113321" Guid="08d5e923-27d4-455e-b62c-e5c39ad2824e">
+    <Head_Info>
+      <Operate Value="66" />
+      <Scale Value="1" />
+      <Start_Step Value="1" Hide_Ctrl_Step="0" />
+      <PN Value="2024-10-08 09-32-18" />
+      <RateType Value="103" />
+    </Head_Info>
+    <Step_Info Num="6">
+      <Step1 Step_ID="1" Step_Type="1">
+        <Record>
+          <Main>
+            <Time Value="500" />
+            <Volt Value="300" />
+          </Main>
+        </Record>
+        <Limit>
+          <Main>
+            <Curr Value="7000" />
+            <Time Value="1800000" />
+            <Stop_Volt Value="40000" />
+          </Main>
+        </Limit>
+      </Step1>
+      <Step2 Step_ID="2" Step_Type="1">
+        <Record>
+          <Main>
+            <Time Value="500" />
+            <Volt Value="300" />
+          </Main>
+        </Record>
+        <Limit>
+          <Main>
+            <Curr Value="500" />
+            <Time Value="300000" />
+            <Stop_Volt Value="40000" />
+          </Main>
+        </Limit>
+      </Step2>
+      <Step3 Step_ID="3" Step_Type="25">
+        <Record>
+          <Main>
+            <Time Value="500" />
+            <Volt Value="5000" />
+          </Main>
+        </Record>
+        <Slope SlopeType="0" Cycle_Count="1" ItemCount="1">
+          <Slope1 StartValue="200" EndValue="7000" Value="22" />
+        </Slope>
+      </Step3>
+      <Step4 Step_ID="4" Step_Type="1">
+        <Record>
+          <Main>
+            <Time Value="500" />
+            <Volt Value="300" />
+          </Main>
+        </Record>
+        <Limit>
+          <Main>
+            <Curr Value="7000" />
+            <Time Value="3600000" />
+            <Stop_Volt Value="40000" />
+          </Main>
+        </Limit>
+      </Step4>
+      <Step5 Step_ID="5" Step_Type="5">
+        <Limit>
+          <Other>
+            <Start_Step Value="2" />
+            <Cycle_Count Value="2" />
+          </Other>
+        </Limit>
+      </Step5>
+      <Step6 Step_ID="6" Step_Type="6">
+      </Step6>
+    </Step_Info>
+    <SMBUS>
+      <SMBUS_Info Num="0" AdjacentInterval="0" />
+    </SMBUS>
+  </config>
+</root>
