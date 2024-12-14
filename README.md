@@ -1,11 +1,14 @@
 # DE_Project
 
-Data processing pipeline using Apache Airflow to transform machine data and metadata into Apache Iceberg format.
+Data processing pipeline using Apache Airflow to transform machine data and metadata through various stages from raw data to star schema.
 
 ## Prerequisites
 
-- Docker and Docker Compose
-- At least 4GB RAM
+1. **Important**: Run `ndax_to_excel.ipynb` Jupyter notebook first
+   - This converts NDAX files to Excel format
+   - This step is separate from Airflow due to issue in Docker on MacOS. Tempdata directory access errors when processing NDAX files
+
+Using Jupyter notebook locally bypasses these Docker/MacOS file system limitations
 
 ## Quick Start
 
@@ -19,47 +22,70 @@ docker compose up -d
 - Username: group8
 - Password: group8
 
-## Project Structure
-```
-DE_PROJECT/
-├── airflow/
-│   ├── dags/
-│   │   ├── tasks/           # Individual pipeline tasks
-│   │   └── pipeline_dag.py  # Main DAG definition
-│   └── Dockerfile
-└── project_data/
-    └── anonymized_data_package/
-        ├── machine_1/
-        ├── machine_1_metadata/
-        ├── machine_2/
-        └── metadata.xlsx
-```
+## Services Access
+
+- **Airflow**: http://localhost:8080
+  - Username: group8
+  - Password: group8
+
+- **MinIO**: http://localhost:9001
+  - Username: group8
+  - Password: group8
+
+- **MongoDB**: localhost:27017
+  - Username: group8
+  - Password: group8
 
 ## Pipeline Flow
 
 1. **Upload Raw Files**
-   - Uploads .xlsx and .dat files from project_data/anonymized_data_package to MinIO (data/raw-data)
+   - Source: project_data/anonymized_data_package
+   - Destination: MinIO (data/raw-data)
+   - Handles: .xlsx and .dat files
 
-2. **Excel Metadata to MongoDB**
-   - Converts Excel files to JSON
+2. **Excel Metadata → MongoDB**
+   - Converts Excel metadata to JSON
    - Stores as BSON in MongoDB
 
-3. **Data Transformations**
-   - Excel to Parquet: Converts machine data Excel files
-   - DAT to Parquet: Converts machine2 .dat files to Parquet (data/bronze/)
-   - MongoDB to Parquet: Converts stored BSON files to Parquet
+3. **Excel → Parquet**
+   - Converts machine1 Excel files to Parquet format
+   - Stored in MinIO bronze bucket
 
-4. **Parquet to Iceberg**
-   - Converts all Parquet files (machine_1, machine_2, metadata) to Iceberg format
+4. **DAT → Parquet**
+   - Converts machine2 .dat files to Parquet
+   - Stored in MinIO bronze bucket
 
-5. **Iceberg to DuckDB**
-   - Work in progress
+5. **MongoDB → Parquet**
+   - Converts metadata from MongoDB to Parquet
+   - Stored in MinIO bronze bucket
 
-## Services
+6. **Parquet → Iceberg**
+   - Convert Parquet files to Iceberg format
 
-- **Airflow**: http://localhost:8080
-- **MinIO**: http://localhost:9001 (minioadmin/minioadmin)
-- **MongoDB**: localhost:27017 (root/example)
+7. **Iceberg → DuckDB**
+   - Load Iceberg tables into DuckDB
+
+8. **DuckDB → Star Schema**
+   - Transform data into star schema for each machine
+   - Separate transformations for machine_1 and machine_2
+
+9. **Star Schema → Iceberg**
+   - Store final star schema in Iceberg format
+
+## Data Flow Structure
+
+```
+NDAX → Excel → MongoDB/MinIO → Parquet → Iceberg → DuckDB → Star Schema → Iceberg
+(Manual)        (Bronze)     (Bronze)  (Silver)          (Gold)       (Gold)
+```
+
+## Known Issues
+
+1. **MacOS DuckDB Issues**
+   - Error: `[Errno 2] No such file or directory: '.\temdata'`
+   - Error: `[Errno 35] Resource deadlock avoided`
+   - Impact: NDAX to Excel conversion fails in Docker containers on MacOS
+   - Workaround: Use Jupyter notebook for NDAX conversion step
 
 ## Troubleshooting
 

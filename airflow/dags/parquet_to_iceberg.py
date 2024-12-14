@@ -133,6 +133,58 @@ def process_machine_2_file(parquet_file, s3, catalog, namespace):
         print(f"Error processing machine_2 file {parquet_file}: {str(e)}")
         raise
 
+def process_metadata_file(parquet_file, s3, catalog, namespace):
+    """Process metadata Parquet file."""
+    print(f"Processing metadata file: {parquet_file}")
+
+    try:
+        # Download Parquet file
+        with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp_parquet:
+            s3.download_fileobj('bronze', parquet_file, tmp_parquet)
+            tmp_parquet_path = tmp_parquet.name
+
+        # Create Iceberg table path
+        iceberg_table_dir = f"silver/{parquet_file.replace('.parquet', '')}_iceberg"
+        iceberg_table_path = f"s3://warehouse/{iceberg_table_dir}"
+
+        # Read the Parquet data using DuckDB
+        with duckdb.connect() as conn:
+            conn.execute("INSTALL httpfs")
+            conn.execute("LOAD httpfs")
+
+            # Configure S3 settings
+            conn.sql("""
+            SET s3_region='us-east-1'; 
+            SET s3_url_style='path';
+            SET s3_endpoint='minio:9000';
+            SET s3_access_key_id='minioadmin';
+            SET s3_secret_access_key='minioadmin';
+            SET s3_use_ssl=false;
+            """)
+
+            # Read metadata Parquet file
+            conn.sql(f"CREATE TABLE tmp AS SELECT * FROM read_parquet('{tmp_parquet_path}')")
+            arrow_table = conn.sql(f"SELECT * FROM tmp").arrow()
+
+        # Create table name
+        table_name = f"{os.path.basename(parquet_file).replace('.parquet', '')}_table"
+        full_table_name = f"{namespace}.{table_name}"
+
+        # Create Iceberg table
+        table = catalog.create_table(
+            identifier=full_table_name,
+            schema=arrow_table.schema,
+            location=iceberg_table_path,
+        )
+        table.append(arrow_table)
+
+        os.remove(tmp_parquet_path)
+        print(f"Successfully processed metadata file: {parquet_file}")
+
+    except Exception as e:
+        print(f"Error processing metadata file {parquet_file}: {str(e)}")
+        raise
+
 
 def parquet_to_iceberg(**context):
     """Process Parquet files from bronze bucket."""
@@ -167,14 +219,16 @@ def parquet_to_iceberg(**context):
 
     # Process files
     for parquet_file in parquet_files:
-        if "machine_1" in parquet_file:
+        if "machine_1" in parquet_file and "metadata" not in parquet_file:
             process_machine_1_file(parquet_file, s3, catalog, namespace)
-        elif "machine_2" in parquet_file:
+        elif "machine_2" in parquet_file and "metadata" not in parquet_file:
             process_machine_2_file(parquet_file, s3, catalog, namespace)
+        elif "metadata" in parquet_file:
+            process_metadata_file(parquet_file, s3, catalog, namespace)
         else:
             print(f"Skipping unrecognized file: {parquet_file}")
 
-
+"""
 with DAG(
     'parquet_to_iceberg',
     schedule_interval=None,  # Manual trigger
@@ -186,4 +240,12 @@ with DAG(
     convert_task = PythonOperator(
         task_id='parquet_to_iceberg',
         python_callable=parquet_to_iceberg
+    )
+    """
+
+def get_parquet_to_iceberg_task(dag):
+    return PythonOperator(
+        task_id='parquet_to_iceberg',
+        python_callable=parquet_to_iceberg,
+        dag=dag
     )

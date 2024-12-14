@@ -35,4 +35,4 @@ with DAG(
     #star_schema_to_iceberg_task = get_star_schema_to_iceberg_task(dag)
 
     # Set up task dependencies
-    upload_task >> convert_metadata_to_mongodb_task >> [convert_excel_to_parquet_task, convert_dat_to_parquet_task, convert_mongodb_to_parquet_task] #>> parquet_to_iceberg_task, iceberg_to_duckdb_task, duckdb_to_star_schema_machine_1_task, duckdb_to_star_schema_machine_2_task, star_schema_to_iceberg_task
+    upload_task >> convert_metadata_to_mongodb_task >> convert_excel_to_parquet_task >> convert_dat_to_parquet_task >> convert_mongodb_to_parquet_task #>> parquet_to_iceberg_task, iceberg_to_duckdb_task, duckdb_to_star_schema_machine_1_task, duckdb_to_star_schema_machine_2_task, star_schema_to_iceberg_task

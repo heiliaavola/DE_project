@@ -18,8 +18,8 @@ services:
     image: mongo:7.0
     container_name: mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: group8
+      MONGO_INITDB_ROOT_PASSWORD: group8
     ports:
       - "27017:27017"
     volumes:
@@ -34,8 +34,8 @@ services:
       - "9000:9000"   # MinIO API port
       - "9001:9001"   # MinIO Console port
     environment:
-      MINIO_ROOT_USER: minioadmin      
-      MINIO_ROOT_PASSWORD: minioadmin  
+      MINIO_ROOT_USER: group8      
+      MINIO_ROOT_PASSWORD: group8  
       MINIO_DOMAIN: minio
     command: server /data --console-address ":9001"
     volumes:
@@ -112,7 +112,7 @@ services:
       - PYICEBERG_CATALOG__REST__S3__SECRET_ACCESS_KEY=minioadmin
       - PYICEBERG_CATALOG__REST__S3__PATH_STYLE_ACCESS=true
       - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
-      - MONGODB_CONNECTION_STRING=mongodb://root:example@mongodb:27017/
+      - MONGODB_CONNECTION_STRING=mongodb://group8:group8@mongodb:27017/
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./mnt/tmp/duckdb_data:/app/data
@@ -149,7 +149,7 @@ services:
       - PYICEBERG_CATALOG__REST__S3__SECRET_ACCESS_KEY=minioadmin
       - PYICEBERG_CATALOG__REST__S3__PATH_STYLE_ACCESS=true
       - AIRFLOW__WEBSERVER__SECRET_KEY='a-very-long-secret-key-that-you-should-change-123456789'
-      - MONGODB_CONNECTION_STRING=mongodb://root:example@mongodb:27017/
+      - MONGODB_CONNECTION_STRING=mongodb://group8:group8@mongodb:27017/
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./mnt/tmp/duckdb_data:/app/data
